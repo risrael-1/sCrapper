@@ -3,10 +3,4 @@ project(sCrapper C)
 
 set(CMAKE_C_STANDARD 11)
 
-find_package(CURL REQUIRED)
-
-add_executable(sCrapper main.c scrapper.h scrapper.c)
-
-target_link_libraries(sCrapper
-        curl
-)
+add_executable(sCrapper main.c)
