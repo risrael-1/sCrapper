@@ -6,3 +6,5 @@ MakeFile
 cmake_install.cmake
 sCrapper
 sCrapper.cbp
+tmp_img*
+tmp_file*
