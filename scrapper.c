@@ -41,20 +41,47 @@ void get_header_data(char* url){
 
 long get_response_code(char* url){
     CURL *curl = curl_easy_init();
+    long response_code = 0;
         if(curl) {
             CURLcode _res;
             curl_easy_setopt(curl, CURLOPT_URL, url);
             curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+            curl_easy_setopt(curl, CURLOPT_FAILONERROR, &response_code);
             _res = perform_request(curl);
             if (_res == CURLE_OK) {
-                long response_code;
                 curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
                 return response_code;
             }
             curl_easy_cleanup(curl);
-            return _res;
+            return response_code;
         }
     return 0;
 }
+
+void scrapp(char* URL, char* type){
+
+}
+
+char* get_content_type(char* URL){
+    CURL *curl = curl_easy_init();
+    char* response_code;
+    if(curl){
+        CURLcode _res;
+        curl_easy_setopt(curl, CURLOPT_URL, URL);
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+        curl_easy_setopt(curl, CURLOPT_FAILONERROR, &response_code);
+        _res = perform_request(curl);
+        if(_res == CURLE_OK){
+            curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &response_code);
+            return response_code;
+        }
+        curl_easy_cleanup(curl);
+    }
+    return NULL;
+}
+
+
+
+
 
 

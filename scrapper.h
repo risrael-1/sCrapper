@@ -11,7 +11,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+//LIBCURL USEFULL METHODS
 static size_t header_callback(char* buffer, size_t size, size_t nitems, void * userdata);
 void get_header_data(char* url);
+char* get_content_type(char*url);
 long get_response_code(char* url);
+CURLcode perform_request(CURL* curl);
+
+//SCRAPPER METHODS
+void scrapp(char* URL, char* type);
+
 #endif //SCRAPPER_SCRAPPER_H
