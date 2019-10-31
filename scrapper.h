@@ -10,6 +10,7 @@
 #include <ntsid.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 //LIBCURL USEFULL METHODS
 static size_t header_callback(char* buffer, size_t size, size_t nitems, void * userdata);
@@ -17,8 +18,9 @@ void get_header_data(char* url);
 char* get_content_type(char*url);
 char* get_content_page(char* url);
 long get_response_code(char* url);
+char* url_get_domain(char* url);
 CURLcode perform_request(CURL* curl);
-void write_img();
+void write_file();
 
 //SCRAPPER METHODS
 void scrapp(char* URL, char* type);

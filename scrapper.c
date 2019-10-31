@@ -90,35 +90,52 @@ char* get_content_page(char* URL){
     }
 }
 
-void write_img(char* URL){
+void write_file(char* URL){
     FILE* img_file;
     CURL* curl = curl_easy_init();
-    char* _img_name = "tmp_img";
+    char* directory_name = url_get_domain(URL);
+    int mkdir_status;
+    char* _file_name = "tmp_file";
     char* _type = get_content_type(URL);
     int sep_pos = 0;
     int size = 0;
+    //GETTING THE POSITION OF "/" OF THE MIME CONTENT TYPE
+    //end of the extension in case of multiple content type
+    int end = 0;
     for(int i = 0 ; i < strlen(_type) ; i++){
+        if(_type[i] == 59){
+            end = i;
+            break;
+        }
         if(_type[i] == 47){
             sep_pos = i;
             size = strlen(_type) - i;
         }
     }
 
+    //SPLITTING THE MIME CONTENT TYPE TO ONLY GET THE SECOND PART AFTER "/"
     char* img_type = malloc(sizeof(char) * size - 1);
     if(size > 0){
         int j = 0;
-        for(int i = sep_pos + 1; i < strlen(_type) ; i++){
+        for(int i = sep_pos + 1; i < end ; i++){
             img_type[j] = _type[i];
             j++;
         }
     }
-    //CREATE FULL FILE NAME WITH THE A NAME + "." + EXTENSION
-    char* full_img_name = malloc(sizeof(char*) * strlen(_img_name) + sizeof(char*) + sizeof(char*) * strlen(img_type));
-    strcpy(full_img_name, _img_name);
-    strcat(full_img_name, ".");
-    strcat(full_img_name, img_type);
 
-    img_file = fopen(full_img_name, "wb");
+    //CREATE FULL FILE NAME WITH THE A NAME + "." + EXTENSION
+    //_file_name =
+    url_get_domain(URL);
+    char* full_file_name = malloc(sizeof(char*) * strlen(_file_name) + sizeof(char*) + sizeof(char*) * strlen(img_type));
+    strcpy(full_file_name, _file_name);
+    strcat(full_file_name, ".");
+    strcat(full_file_name, img_type);
+
+    //CREATING DIRECTORY TO SAVE SCRAPPED CONTENT
+    mkdir(directory_name, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    //WRITE DATA INTO FILE
+    img_file = fopen(full_file_name, "wb");
     if(img_file != NULL && curl){
         curl_easy_setopt(curl, CURLOPT_URL, URL);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
@@ -128,9 +145,34 @@ void write_img(char* URL){
             printf("%d", _res);
         }
     }
-
     curl_easy_cleanup(curl);
     fclose(img_file);
+}
+
+char* url_get_domain(char* URL){
+    int slash_pos = 0;
+    int end_slash_pos = 0;
+    int domain_size = 0;
+    char* domain;
+    for(int i = 0 ; i < strlen(URL) ; i++){
+        //ASCII 47 -> /
+        if(URL[i] == 47 && URL[i + 1] == 47){
+            slash_pos = i;
+        } else if (URL[i] == 47 && URL[i + 1] != 47 && URL [i - 1] != 47) {
+            end_slash_pos = i;
+            break;
+        }
+    }
+    for (int i = slash_pos + 2 ; i < end_slash_pos; i++){
+        domain_size++;
+    }
+    domain = malloc(sizeof(char* ) * domain_size - 2);
+    int j = 0;
+    for(int i = slash_pos + 2; i < end_slash_pos; i++){
+        domain[j] = URL[i];
+        j++;
+    }
+    return domain;
 }
 
 
