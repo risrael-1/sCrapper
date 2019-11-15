@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 11)
 
 find_package(CURL REQUIRED)
 
-add_executable(sCrapper main.c scrapper.h scrapper.c)
+add_executable(sCrapper main.c scrapper.h scrapper.c Parser.c Parser.h)
 
 target_link_libraries(sCrapper
         curl

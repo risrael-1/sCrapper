@@ -90,10 +90,12 @@ char* get_content_page(char* URL){
     }
 }
 
+//TODO USE DOMAIN NAME TO PUT FILE INTO DIRECTORY NAMED BY URL DOMAIN (mkdir DOMAIN_NAME/FILE_NAME)
 void write_file(char* URL){
     FILE* img_file;
     CURL* curl = curl_easy_init();
     char* directory_name = url_get_domain(URL);
+    printf("%s", directory_name);
     int mkdir_status;
     char* _file_name = "tmp_file";
     char* _type = get_content_type(URL);
@@ -126,8 +128,10 @@ void write_file(char* URL){
     //CREATE FULL FILE NAME WITH THE A NAME + "." + EXTENSION
     //_file_name =
     url_get_domain(URL);
-    char* full_file_name = malloc(sizeof(char*) * strlen(_file_name) + sizeof(char*) + sizeof(char*) * strlen(img_type));
-    strcpy(full_file_name, _file_name);
+    char* full_file_name = malloc(sizeof(char*) * strlen(_file_name) + sizeof(char*) * 2 + sizeof(char*) * strlen(img_type) + sizeof(char*) * strlen(directory_name));
+    strcpy(full_file_name, directory_name);
+    strcat(full_file_name, "/");
+    strcat(full_file_name, _file_name);
     strcat(full_file_name, ".");
     strcat(full_file_name, img_type);
 
@@ -150,6 +154,7 @@ void write_file(char* URL){
 }
 
 char* url_get_domain(char* URL){
+    printf("%s", URL);
     int slash_pos = 0;
     int end_slash_pos = 0;
     int domain_size = 0;
@@ -172,6 +177,7 @@ char* url_get_domain(char* URL){
         domain[j] = URL[i];
         j++;
     }
+    printf("%s", domain);
     return domain;
 }
 
