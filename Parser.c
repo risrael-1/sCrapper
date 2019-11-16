@@ -23,10 +23,22 @@ struct Tache {
 
 typedef struct Tache Tache;
 
+void errorSyntaxeConfig(char *message) {
+    int enter;
+    printf("%s", message);
+    scanf("%d",&enter);
+    exit(123);
+}
+
 void replaceAccolade(char *string) {
     char *place;
     place = strchr(string, '}');
-    *place = '\0';
+    if (place == NULL) {
+        errorSyntaxeConfig('Missing \'}\'');
+    } else {
+        *place = '\0';
+    }
+
 }
 
 char *getInfos(char *line) {
@@ -51,7 +63,7 @@ int getValue(char *line) {
     return atoi(info);
 }
 
-char *getValueBefore(char * info, char character) {
+char *getValueBefore(char *info, char character) {
     char *value;
     char *separateur;
     value = malloc(sizeof(char) * 255);
@@ -63,9 +75,11 @@ char *getValueBefore(char * info, char character) {
     return value;
 }
 
-int run(){
+int run() {
     int counterActions = -1;
     int counterTaches = -1;
+    int counter;
+    char * info;
 
     // Liste des actions et des taches (commence par un a car Array)
     Action *aActions = malloc(sizeof(Action) * 10);
@@ -88,9 +102,16 @@ int run(){
             if (strstr(line, "==") != NULL) { // Si == on créé une tache
                 counterTaches++;
 
-                //On récupère les infos de la tache
+                //On récupère les infos de la tache & on vérifie que le nom est unique
                 fgets(line, 100, f);
-                aTaches[counterTaches].name = getInfos(line); // Name
+                info = getInfos(line);
+                for(counter = 0 ; counter < counterTaches ; counter ++){
+                    if(strcmp(aTaches[counter].name,info) == 0){
+                        errorSyntaxeConfig("Same task names");
+                    }
+                }
+
+                aTaches[counterTaches].name = info; // Name
 
             } else if (strstr(line, "=") != NULL) { // Si = on créé une action
                 counterActions++;
