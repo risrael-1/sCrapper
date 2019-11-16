@@ -49,16 +49,21 @@ int getValue(char *line) {
     return atoi(info);
 }
 
+char *getValueBefore(char * info, char character) {
+    char *value;
+    char *separateur;
+    value = malloc(sizeof(char) * 255);
+    if (value != NULL) {
+        strcpy(value, info);
+        separateur = strchr(value, character);
+        *separateur = '\0';
+    }
+    return value;
+}
+
 int main() {
-    int totalActions = 0;
-    int totalTaches = 0;
     int counterActions = -1;
     int counterTaches = -1;
-
-    // Type de paramètre décrit dans le fichier :
-    // 0 => Action
-    // 1 => Tache
-    int typeParam;
 
     // Liste des actions et des taches (commence par un a car Array)
     Action *aActions = malloc(sizeof(Action) * 10);
@@ -69,29 +74,17 @@ int main() {
     FILE *f = fopen("test.txt", "r");
 
     if (f != NULL) {
-        // On parse une première fois pour compter le nb d'actions et de taches
-        while (fgets(line, 255, f) != NULL) {
-            if (strstr(line, "==") != NULL) {
-                totalTaches++;
-            } else if (strstr(line, "=") != NULL) {
-                totalActions++;
-            }
-        }
-
         fseek(f, 0, SEEK_SET);
 
         while (fgets(line, 100, f) != NULL) {
-            if (strstr(line, "==") != NULL) { // Si = on créé une tache
-                typeParam = 1;
+            if (strstr(line, "==") != NULL) { // Si == on créé une tache
                 counterTaches++;
 
-                //On récupère les infos de l'action
+                //On récupère les infos de la tache
                 fgets(line, 100, f);
                 aTaches[counterTaches].name = getInfos(line); // Name
 
-            } else if (strstr(line, "=") != NULL) { // Si == on créé une action
-                typeParam = 0;
-
+            } else if (strstr(line, "=") != NULL) { // Si = on créé une action
                 counterActions++;
 
                 //On récupère les infos de l'action
@@ -108,31 +101,25 @@ int main() {
                         aActions[counterActions].max_depth = getInfos(line);
                     } else if (strstr(line, "versionning") != NULL) { // Versionning
                         aActions[counterActions].versionning = getInfos(line);
-                    }
-                } else {
+                    } // DO TO : option type -> (type1, type2, type3)
+                } else { // Actions d'une tache
                     int i = 0;
                     char *info;
-                    char *value;
-                    char *sep;
-                    value = malloc(sizeof(char) * 255);
 
                     info = strchr(line, '(') + 1;
 
                     aTaches[counterTaches].listeActions = malloc(sizeof(char *) * 10);
 
-                    while (strchr(info, ',') != NULL) {
-                        strcpy(value, info);
-                        info = strchr(info, ',') + 1;
-                        sep = strchr(value, ',');
-                        *sep = '\0';
-                        printf("%s", value);
-
+                    while (strchr(info, ',') != NULL && i <= 8) {
                         aTaches[counterTaches].listeActions[i] = malloc(sizeof(char) * 255);
-                        aTaches[counterTaches].listeActions[i] = value;
+                        strcpy(aTaches[counterTaches].listeActions[i], getValueBefore(info, ','));
+                        info = strchr(info, ',') + 1;
 
                         i++;
                     }
-                    free(value);
+                    aTaches[counterTaches].listeActions[i] = malloc(sizeof(char) * 255);
+                    strcpy(aTaches[counterTaches].listeActions[i], getValueBefore(info, ')'));
+
                 }
             } else if (strstr(line, "{") != NULL) { // Valeurs d'une tâche
                 if (strstr(line, "second") != NULL) {
@@ -150,8 +137,9 @@ int main() {
     }
 
     printf("%d", aTaches[1].second);
-    printf("%d", aTaches[1].minute);
-    printf("%s", aTaches[0].listeActions[0]);
+    printf(" %d", aTaches[1].minute);
+    printf("\n%s", aTaches[0].listeActions[1]);
+    printf("\n%s", aTaches[1].listeActions[0]);
 
     free(aActions);
     free(aTaches);
