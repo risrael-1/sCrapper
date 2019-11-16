@@ -73,7 +73,13 @@ int run(){
 
     char line[100];
 
-    FILE *f = fopen("test.txt", "r");
+    printf("Bienvenue dans Scrapper\n\n");
+    char fic[255];
+    printf("Veuillez saisir un fichier de configuration\n");
+    scanf("%s", fic);
+    printf("Votre fichier de configuration : %s va être traite", fic);
+
+    FILE *f = fopen(fic, "r");
 
     if (f != NULL) {
         fseek(f, 0, SEEK_SET);
