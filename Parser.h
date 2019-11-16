@@ -20,4 +20,5 @@ char *getInfos(char *line);
 
 int getValue(char *line);
 
+char *getValueBefore(char * info, char character);
 #endif //SCRAPPER_PARSER_H
