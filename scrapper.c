@@ -4,6 +4,11 @@
 
 #include "scrapper.h"
 
+/**
+ * Perform request of a curl passed as argument
+ * @param curl
+ * @return
+ */
 CURLcode perform_request(CURL* curl){
     CURLcode _res = 0;
     char* _error_buff = malloc(sizeof(char*) * CURL_ERROR_SIZE);
@@ -14,7 +19,7 @@ CURLcode perform_request(CURL* curl){
         if(_res != CURLE_OK){
             size_t _err_len = strlen(_error_buff);
             if(_err_len){
-                fprintf(stderr, "%s", _error_buff);
+                fprintf(stderr, "%s\n", _error_buff);
             } else {
                 fprintf(stderr, "%s\n", curl_easy_strerror(_res));
             }
@@ -23,11 +28,23 @@ CURLcode perform_request(CURL* curl){
     return _res;
 }
 
+/**
+ * Cakkback called from get_header_data() function
+ * @param buffer
+ * @param size
+ * @param nitems
+ * @param userdata
+ * @return
+ */
 static size_t header_callback(char* buffer, size_t size, size_t nitems, void * userdata){
     printf("%s", buffer );
     return nitems * size;
 }
 
+/**
+ * Get header data
+ * @param url
+ */
 void get_header_data(char* url){
     CURL *curl = curl_easy_init();
     CURLcode _res = 0;
@@ -39,6 +56,11 @@ void get_header_data(char* url){
     }
 }
 
+/**
+ * Get HTTP response code
+ * @param url
+ * @return
+ */
 long get_response_code(char* url){
     CURL *curl = curl_easy_init();
     long response_code = 0;
@@ -58,10 +80,11 @@ long get_response_code(char* url){
     return 0;
 }
 
-void scrapp(char* URL, char* type){
-
-}
-
+/**
+ * Get content type of page from MIME in HEADER
+ * @param URL
+ * @return
+ */
 char* get_content_type(char* URL){
     CURL *curl = curl_easy_init();
     char* response_code;
@@ -73,14 +96,17 @@ char* get_content_type(char* URL){
         _res = perform_request(curl);
         if(_res == CURLE_OK){
             curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &response_code);
-            printf("RESPONSE CODE -> %s\n", response_code);
             return response_code;
         }
         curl_easy_cleanup(curl);
     }
     return NULL;
 }
-
+/**
+ * Get content of page -> UNUSED
+ * @param URL
+ * @return
+ */
 char* get_content_page(char* URL){
     CURL* curl = curl_easy_init();
     char* response_code;
@@ -91,7 +117,14 @@ char* get_content_page(char* URL){
     }
     return NULL;
 }
-
+/**
+ * Get part of string between two characters passed as arguments
+ * @param start
+ * @param line
+ * @param char1
+ * @param char2
+ * @return
+ */
 char* get_string_part(int start, char* line, char char1, char char2){
     start = 0;
     char* buffer = malloc(sizeof(char) * 255);
@@ -106,10 +139,14 @@ char* get_string_part(int start, char* line, char char1, char char2){
     }
 
     strncat(buffer, &line[start + 1], (fin - start - 1));
-    printf("%s\n", buffer);
     return buffer;
 }
 
+/**
+ * Create a table containing all hyperlinks found on scrapped website
+ * @param file
+ * @return
+ */
 char** get_hyperlinks(char* file){
     printf("\nDEBUG - get_hyperlinks BEGIN\n");
     char* array_link[255];
@@ -128,30 +165,29 @@ char** get_hyperlinks(char* file){
                 char* link = strstr(tmp, "http");
                 if(link != NULL){
                     array_link[i] = link;
+                    printf("-> %s\n", array_link[i]);
                     array_size++;
                     i++;
                 }
             }
         }
-        for(int j = 0 ; j < array_size ; j++){
-            if(array_link[j] != NULL){
-                //printf("array link: %s\n", array_link[j]);
-
-            } else {
-                printf("NULL");
-                break;
-            }
-        }
     } else {
-        fprintf(stderr, "get_hyperlinks() -> Error: Cannot open %s.", file);
+        fprintf(stderr, "get_hyperlinks() -> Error: Cannot open %s. Exiting...\n", file);
+        exit(1);
     }
     printf("\nDEBUG - get_hyperlinks END\n");
     return array_link;
 }
 
+/**
+ * Create file with website source code
+ * @param URL
+ * @return
+ */
 //TODO USE DOMAIN NAME TO PUT FILE INTO DIRECTORY NAMED BY URL DOMAIN (mkdir DOMAIN_NAME/FILE_NAME)
 char* write_file(char* URL){
     printf("\nwrite_file() BEGIN\n");
+    printf("URL -> %s\n", URL);
     FILE* tmp_file;
     CURL* curl = curl_easy_init();
     char* directory_name = url_get_domain(URL);
@@ -188,15 +224,18 @@ char* write_file(char* URL){
         }
     }
     //CREATE FULL FILE NAME WITH THE A NAME + "." + EXTENSION
-    //_file_name =
-    char* full_file_name = malloc(sizeof(char*) * strlen(_file_name) + sizeof(char*) * 2 + sizeof(char*) * strlen(img_type) + sizeof(char*) * strlen(directory_name));
+
+    char* full_file_name = malloc(sizeof(char) * strlen(_file_name) + sizeof(char) * 2 + sizeof(char) * strlen(img_type) + sizeof(char) * strlen(directory_name));
     strcpy(full_file_name, directory_name);
     strcat(full_file_name, "/");
     strcat(full_file_name, _file_name);
     strcat(full_file_name, ".");
+    if(strlen(img_type) == 0){
+        img_type = "html";
+    }
     strcat(full_file_name, img_type);
 
-    printf("\nFULLFILENAME -> %s", full_file_name);
+    printf("\nFULLFILENAME -> %s", img_type);
 
     //CREATING DIRECTORY TO SAVE SCRAPPED CONTENT
     mkdir(directory_name, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -208,9 +247,12 @@ char* write_file(char* URL){
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, tmp_file);
         CURLcode _res = perform_request(curl);
-        if(_res){
-            printf("%d", _res);
-        }
+        if(!_res){
+            printf("\nRES -> %d\n", _res);
+        } else {
+            fclose(tmp_file);
+            return NULL;
+        }//TODO: _res ERROR not treated
     }
     curl_easy_cleanup(curl);
     fclose(tmp_file);
@@ -218,7 +260,13 @@ char* write_file(char* URL){
     return full_file_name;
 }
 
+/**
+ * Get onnfly domain name of URL
+ * @param URL
+ * @return
+ */
 char* url_get_domain(char* URL){
+    printf("URL[i] -> %s\n", URL);
     int slash_pos = 0;
     int end_slash_pos = 0;
     int domain_size = 0;
@@ -227,15 +275,18 @@ char* url_get_domain(char* URL){
         //ASCII 47 -> /
         if(URL[i] == 47 && URL[i + 1] == 47){
             slash_pos = i;
-        } else if (URL[i] == 47 && URL[i + 1] != 47 && URL [i - 1] != 47) {
+        } else if ((URL[i] == 47 && URL[i + 1] != 47 && URL [i - 1] != 47) || (URL [i] == 'm' && URL[i - 1] == 'o' && URL [ i - 2] == 'c')) {
             end_slash_pos = i;
             break;
         }
     }
     for (int i = slash_pos + 2 ; i < end_slash_pos; i++){
-        domain_size++;
+        if(URL[i] >= 97 && URL[i] <= 122){
+            domain_size++;
+        }
     }
-    domain = malloc(sizeof(char* ) * domain_size - 2);
+    printf("DOMAINE SIZE -> %d\n", domain_size);
+    domain = malloc(sizeof(char) * domain_size - 4);
     int j = 0;
     for(int i = slash_pos + 2; i < end_slash_pos; i++){
         if(URL[i] >= 97 && URL[i] <= 122){
@@ -243,6 +294,7 @@ char* url_get_domain(char* URL){
             j++;
         }
     }
+    printf("DOMAINE SIZE domain -> %lu\n", strlen(domain));
     printf("DOMAIN : %s", domain);
     return domain;
 }

@@ -1,5 +1,4 @@
 #include "scrapper.h"
-#include "Parser.h"
 
 int main(int argc, char **argv) {
     char* URL;
@@ -14,10 +13,20 @@ int main(int argc, char **argv) {
             max_depth = atoi(argv[i + 1]);
             printf("md -> %d\n", max_depth);
             char** hyperlinks = get_hyperlinks(write_file(URL));
+            //GET LA SIZE DU TABLEAU DE LIENS
+            int j = 0;
+            int size = 0;
+            while(hyperlinks[j]){
+                size++;
+                j++;
+            }
+            //PARCOURS DES TOUT LES LIENS JUSQU'AU NIVEAU MAX DEMANDE max-depth
             for(int i = 0 ; i < max_depth ; i++){
-                if(strcmp(hyperlinks[i], URL) != 0 && hyperlinks[i] != NULL){
-                    printf("URL I: %s \n", hyperlinks[i]);
-                    get_hyperlinks(write_file(hyperlinks[i]));
+                if(hyperlinks[i] != NULL){
+                    if(strcmp(hyperlinks[i], URL) != 0 ){
+                        printf("URL: %s \n", hyperlinks[i]);
+                        get_hyperlinks(write_file(hyperlinks[i]));
+                    }
                 }
             }
         }
