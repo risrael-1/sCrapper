@@ -20,7 +20,11 @@ char* get_content_page(char* url);
 long get_response_code(char* url);
 char* url_get_domain(char* url);
 CURLcode perform_request(CURL* curl);
-void write_file();
+
+char* get_string_part(int start, char* line, char char1, char char2);
+char** get_hyperlinks(char* URL);
+
+char* write_file(char* URL);
 
 //SCRAPPER METHODS
 void scrapp(char* URL, char* type);

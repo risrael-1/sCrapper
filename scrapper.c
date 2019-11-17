@@ -73,6 +73,7 @@ char* get_content_type(char* URL){
         _res = perform_request(curl);
         if(_res == CURLE_OK){
             curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &response_code);
+            printf("RESPONSE CODE -> %s\n", response_code);
             return response_code;
         }
         curl_easy_cleanup(curl);
@@ -88,14 +89,73 @@ char* get_content_page(char* URL){
         curl_easy_setopt(curl, CURLOPT_URL, URL);
         perform_request(curl);
     }
+    return NULL;
+}
+
+char* get_string_part(int start, char* line, char char1, char char2){
+    start = 0;
+    char* buffer = malloc(sizeof(char) * 255);
+    //34 ASCII for "
+    while(line[start] != char1) {
+        start += 1;
+    }
+
+    int fin = start + 1;
+    while(line[fin] != char2) {
+        fin += 1;
+    }
+
+    strncat(buffer, &line[start + 1], (fin - start - 1));
+    printf("%s\n", buffer);
+    return buffer;
+}
+
+char** get_hyperlinks(char* file){
+    printf("\nDEBUG - get_hyperlinks BEGIN\n");
+    char* array_link[255];
+    int array_size = 0;
+    FILE* scrapped_site;
+    scrapped_site = fopen(file, "r");
+    if(scrapped_site != NULL){
+        int buf_length = 255;
+        char* buffer = malloc(sizeof(char*) * 255);
+        int i = 0;
+        while(fgets(buffer, buf_length, scrapped_site) != NULL){
+            char* tmp_link = strstr(buffer, "<a href=");
+            if(tmp_link != NULL){
+                //printf("DEBUG - get_string_part() -> %s\n \n", get_string_part(0, tmp_link));
+                char* tmp = get_string_part(0, tmp_link, '"', '"');
+                char* link = strstr(tmp, "http");
+                if(link != NULL){
+                    array_link[i] = link;
+                    array_size++;
+                    i++;
+                }
+            }
+        }
+        for(int j = 0 ; j < array_size ; j++){
+            if(array_link[j] != NULL){
+                //printf("array link: %s\n", array_link[j]);
+
+            } else {
+                printf("NULL");
+                break;
+            }
+        }
+    } else {
+        fprintf(stderr, "get_hyperlinks() -> Error: Cannot open %s.", file);
+    }
+    printf("\nDEBUG - get_hyperlinks END\n");
+    return array_link;
 }
 
 //TODO USE DOMAIN NAME TO PUT FILE INTO DIRECTORY NAMED BY URL DOMAIN (mkdir DOMAIN_NAME/FILE_NAME)
-void write_file(char* URL){
-    FILE* img_file;
+char* write_file(char* URL){
+    printf("\nwrite_file() BEGIN\n");
+    FILE* tmp_file;
     CURL* curl = curl_easy_init();
     char* directory_name = url_get_domain(URL);
-    printf("%s", directory_name);
+    printf("\nDirectory name: %s\n", directory_name);
     int mkdir_status;
     char* _file_name = "tmp_file";
     char* _type = get_content_type(URL);
@@ -105,16 +165,19 @@ void write_file(char* URL){
     //end of the extension in case of multiple content type
     int end = 0;
     for(int i = 0 ; i < strlen(_type) ; i++){
+        //59 -> ;
         if(_type[i] == 59){
             end = i;
             break;
         }
+        //47 -> /
         if(_type[i] == 47){
             sep_pos = i;
-            size = strlen(_type) - i;
+            //TODO DYNAMIC SIZE
+            size = 4;
         }
     }
-
+    printf("ICI %d\n", size);
     //SPLITTING THE MIME CONTENT TYPE TO ONLY GET THE SECOND PART AFTER "/"
     char* img_type = malloc(sizeof(char) * size - 1);
     if(size > 0){
@@ -124,10 +187,8 @@ void write_file(char* URL){
             j++;
         }
     }
-
     //CREATE FULL FILE NAME WITH THE A NAME + "." + EXTENSION
     //_file_name =
-    url_get_domain(URL);
     char* full_file_name = malloc(sizeof(char*) * strlen(_file_name) + sizeof(char*) * 2 + sizeof(char*) * strlen(img_type) + sizeof(char*) * strlen(directory_name));
     strcpy(full_file_name, directory_name);
     strcat(full_file_name, "/");
@@ -135,26 +196,29 @@ void write_file(char* URL){
     strcat(full_file_name, ".");
     strcat(full_file_name, img_type);
 
+    printf("\nFULLFILENAME -> %s", full_file_name);
+
     //CREATING DIRECTORY TO SAVE SCRAPPED CONTENT
     mkdir(directory_name, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     //WRITE DATA INTO FILE
-    img_file = fopen(full_file_name, "wb");
-    if(img_file != NULL && curl){
+    tmp_file = fopen(full_file_name, "wb");
+    if(tmp_file != NULL && curl){
         curl_easy_setopt(curl, CURLOPT_URL, URL);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, img_file);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, tmp_file);
         CURLcode _res = perform_request(curl);
         if(_res){
             printf("%d", _res);
         }
     }
     curl_easy_cleanup(curl);
-    fclose(img_file);
+    fclose(tmp_file);
+    printf("\nFULL FILE NAME: %s\n", full_file_name);
+    return full_file_name;
 }
 
 char* url_get_domain(char* URL){
-    printf("%s", URL);
     int slash_pos = 0;
     int end_slash_pos = 0;
     int domain_size = 0;
@@ -174,10 +238,12 @@ char* url_get_domain(char* URL){
     domain = malloc(sizeof(char* ) * domain_size - 2);
     int j = 0;
     for(int i = slash_pos + 2; i < end_slash_pos; i++){
-        domain[j] = URL[i];
-        j++;
+        if(URL[i] >= 97 && URL[i] <= 122){
+            domain[j] = URL[i];
+            j++;
+        }
     }
-    printf("%s", domain);
+    printf("DOMAIN : %s", domain);
     return domain;
 }
 
